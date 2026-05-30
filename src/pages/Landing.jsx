@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { AnimatedButton, FadeIn } from '../components/AnimatedCard'
 
 function Landing() {
   const navigate = useNavigate()
@@ -7,32 +9,36 @@ function Landing() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
 
       {/* Navbar */}
-      <nav style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '20px 60px', borderBottom: '1px solid var(--border)',
-        background: 'var(--bg2)'
-      }}>
+      <motion.nav
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '20px 60px', borderBottom: '1px solid var(--border)',
+          background: 'var(--bg2)'
+        }}
+      >
         <div style={{ fontFamily: 'Space Mono', fontSize: '20px', color: 'var(--accent)' }}>
           SmartIntern<span style={{ color: 'var(--text)' }}>AI</span>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
-          <button onClick={() => navigate('/login')} style={{
+          <AnimatedButton onClick={() => navigate('/login')} style={{
             padding: '8px 20px', background: 'transparent',
             border: '1px solid var(--border)', borderRadius: '8px',
-            color: 'var(--text)', fontSize: '14px',
-            transition: 'border-color 0.2s'
+            color: 'var(--text)', fontSize: '14px'
           }}>
             Login
-          </button>
-          <button onClick={() => navigate('/register')} style={{
+          </AnimatedButton>
+          <AnimatedButton onClick={() => navigate('/register')} style={{
             padding: '8px 20px', background: 'var(--accent)',
             border: 'none', borderRadius: '8px',
             color: '#fff', fontSize: '14px'
           }}>
             Get Started
-          </button>
+          </AnimatedButton>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* Hero Section */}
       <div style={{
@@ -42,44 +48,52 @@ function Landing() {
         background: 'radial-gradient(ellipse at top, #1a1a2e 0%, var(--bg) 70%)'
       }}>
 
-        <div style={{
-          display: 'inline-block', padding: '6px 16px',
-          background: 'var(--glow)', border: '1px solid var(--accent)',
-          borderRadius: '20px', fontSize: '13px', color: 'var(--accent2)',
-          marginBottom: '24px'
-        }}>
-          ✦ AI Powered Internship Matching
-        </div>
-
-        <h1 style={{ fontSize: '56px', lineHeight: '1.1', marginBottom: '24px', maxWidth: '700px' }}>
-          Find Internships That <span style={{ color: 'var(--accent)' }}>Match Your Skills</span>
-        </h1>
-
-        <p style={{
-          fontSize: '18px', color: 'var(--text2)', maxWidth: '500px',
-          lineHeight: '1.7', marginBottom: '40px'
-        }}>
-          Upload your resume and let our AI find the perfect internship for you. 
-          Get match scores, skill gap analysis and career guidance.
-        </p>
-
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <button onClick={() => navigate('/register')} style={{
-            padding: '14px 32px', background: 'var(--accent)',
-            border: 'none', borderRadius: '10px', color: '#fff',
-            fontSize: '16px', fontWeight: '600',
-            boxShadow: '0 0 30px var(--glow)'
+        <FadeIn delay={0.1}>
+          <div style={{
+            display: 'inline-block', padding: '6px 16px',
+            background: 'var(--glow)', border: '1px solid var(--accent)',
+            borderRadius: '20px', fontSize: '13px', color: 'var(--accent2)',
+            marginBottom: '24px'
           }}>
-            Get Started Free →
-          </button>
-          <button onClick={() => navigate('/search')} style={{
-            padding: '14px 32px', background: 'transparent',
-            border: '1px solid var(--border)', borderRadius: '10px',
-            color: 'var(--text)', fontSize: '16px'
+            ✦ AI Powered Internship Matching
+          </div>
+        </FadeIn>
+
+        <FadeIn delay={0.2}>
+          <h1 style={{ fontSize: '56px', lineHeight: '1.1', marginBottom: '24px', maxWidth: '700px' }}>
+            Find Internships That <span style={{ color: 'var(--accent)' }}>Match Your Skills</span>
+          </h1>
+        </FadeIn>
+
+        <FadeIn delay={0.3}>
+          <p style={{
+            fontSize: '18px', color: 'var(--text2)', maxWidth: '500px',
+            lineHeight: '1.7', marginBottom: '40px'
           }}>
-            Browse Internships
-          </button>
-        </div>
+            Upload your resume and let our AI find the perfect internship for you.
+            Get match scores, skill gap analysis and career guidance.
+          </p>
+        </FadeIn>
+
+        <FadeIn delay={0.4}>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <AnimatedButton onClick={() => navigate('/register')} style={{
+              padding: '14px 32px', background: 'var(--accent)',
+              border: 'none', borderRadius: '10px', color: '#fff',
+              fontSize: '16px', fontWeight: '600',
+              boxShadow: '0 0 30px var(--glow)'
+            }}>
+              Get Started Free →
+            </AnimatedButton>
+            <AnimatedButton onClick={() => navigate('/search')} style={{
+              padding: '14px 32px', background: 'transparent',
+              border: '1px solid var(--border)', borderRadius: '10px',
+              color: 'var(--text)', fontSize: '16px'
+            }}>
+              Browse Internships
+            </AnimatedButton>
+          </div>
+        </FadeIn>
       </div>
 
       {/* Features Section */}
@@ -87,9 +101,11 @@ function Landing() {
         padding: '80px 60px', background: 'var(--bg2)',
         borderTop: '1px solid var(--border)'
       }}>
-        <h2 style={{ textAlign: 'center', fontSize: '32px', marginBottom: '48px' }}>
-          Why <span style={{ color: 'var(--accent)' }}>SmartIntern AI?</span>
-        </h2>
+        <FadeIn>
+          <h2 style={{ textAlign: 'center', fontSize: '32px', marginBottom: '48px' }}>
+            Why <span style={{ color: 'var(--accent)' }}>SmartIntern AI?</span>
+          </h2>
+        </FadeIn>
 
         <div style={{
           display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
@@ -100,15 +116,22 @@ function Landing() {
             { icon: '🎯', title: 'Smart Matching', desc: 'Get matched to internships that actually fit your profile' },
             { icon: '📈', title: 'Skill Gap Analysis', desc: 'Know exactly what skills you need to land your dream internship' }
           ].map((f, i) => (
-            <div key={i} style={{
-              padding: '28px', background: 'var(--bg3)',
-              border: '1px solid var(--border)', borderRadius: '12px',
-              textAlign: 'center'
-            }}>
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: i * 0.15 }}
+              whileHover={{ scale: 1.05, borderColor: 'var(--accent)' }}
+              style={{
+                padding: '28px', background: 'var(--bg3)',
+                border: '1px solid var(--border)', borderRadius: '12px',
+                textAlign: 'center', cursor: 'default'
+              }}
+            >
               <div style={{ fontSize: '32px', marginBottom: '12px' }}>{f.icon}</div>
               <h3 style={{ fontSize: '16px', marginBottom: '8px', fontFamily: 'Space Grotesk' }}>{f.title}</h3>
               <p style={{ fontSize: '14px', color: 'var(--text2)', lineHeight: '1.6' }}>{f.desc}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>

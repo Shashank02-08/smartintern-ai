@@ -56,10 +56,12 @@ function Register() {
 
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{
-            fontFamily: 'Space Mono', fontSize: '22px',
-            color: 'var(--accent)', marginBottom: '8px'
-          }}>
+          <div 
+            onClick={() => navigate('/')}
+            style={{
+              fontFamily: 'Space Mono', fontSize: '22px',
+              color: 'var(--accent)', marginBottom: '8px', cursor: 'pointer'
+            }}>
             SmartIntern<span style={{ color: 'var(--text)' }}>AI</span>
           </div>
           <p style={{ color: 'var(--text2)', fontSize: '14px' }}>
