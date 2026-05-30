@@ -1,0 +1,166 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+const DUMMY_INTERNSHIPS = [
+  { id: 1, title: 'Frontend Developer Intern', company: 'TechCorp', location: 'Remote', skills: ['React', 'CSS', 'JavaScript'], stipend: '₹15,000/month', duration: '3 months' },
+  { id: 2, title: 'Data Science Intern', company: 'DataWorks', location: 'Bangalore', skills: ['Python', 'ML', 'Pandas'], stipend: '₹20,000/month', duration: '6 months' },
+  { id: 3, title: 'Backend Developer Intern', company: 'Startup X', location: 'Remote', skills: ['Node.js', 'MongoDB', 'REST API'], stipend: '₹12,000/month', duration: '3 months' },
+  { id: 4, title: 'UI/UX Design Intern', company: 'DesignHub', location: 'Mumbai', skills: ['Figma', 'Adobe XD', 'Prototyping'], stipend: '₹10,000/month', duration: '2 months' },
+  { id: 5, title: 'Machine Learning Intern', company: 'AI Labs', location: 'Hyderabad', skills: ['Python', 'TensorFlow', 'NLP'], stipend: '₹25,000/month', duration: '6 months' },
+  { id: 6, title: 'Android Developer Intern', company: 'AppFactory', location: 'Pune', skills: ['Kotlin', 'Android', 'Firebase'], stipend: '₹18,000/month', duration: '4 months' },
+]
+
+function Search() {
+  const navigate = useNavigate()
+  const [query, setQuery] = useState('')
+  const [location, setLocation] = useState('')
+
+  const filtered = DUMMY_INTERNSHIPS.filter(i => {
+    const matchQuery = i.title.toLowerCase().includes(query.toLowerCase()) ||
+      i.company.toLowerCase().includes(query.toLowerCase()) ||
+      i.skills.some(s => s.toLowerCase().includes(query.toLowerCase()))
+    const matchLocation = location === '' || i.location.toLowerCase().includes(location.toLowerCase())
+    return matchQuery && matchLocation
+  })
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+
+      {/* Navbar */}
+      <nav style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '20px 60px', borderBottom: '1px solid var(--border)',
+        background: 'var(--bg2)'
+      }}>
+        <div
+          onClick={() => navigate('/')}
+          style={{ fontFamily: 'Space Mono', fontSize: '20px', color: 'var(--accent)', cursor: 'pointer' }}
+        >
+          SmartIntern<span style={{ color: 'var(--text)' }}>AI</span>
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button onClick={() => navigate('/dashboard')} style={{
+            padding: '8px 20px', background: 'transparent',
+            border: '1px solid var(--border)', borderRadius: '8px',
+            color: 'var(--text)', fontSize: '14px'
+          }}>
+            Dashboard
+          </button>
+          <button onClick={() => navigate('/profile')} style={{
+            padding: '8px 20px', background: 'var(--accent)',
+            border: 'none', borderRadius: '8px',
+            color: '#fff', fontSize: '14px'
+          }}>
+            Profile
+          </button>
+        </div>
+      </nav>
+
+      {/* Search Header */}
+      <div style={{
+        padding: '48px 60px 32px',
+        background: 'radial-gradient(ellipse at top, #1a1a2e 0%, var(--bg) 70%)',
+        borderBottom: '1px solid var(--border)'
+      }}>
+        <h1 style={{ fontSize: '32px', marginBottom: '24px' }}>
+          Find <span style={{ color: 'var(--accent)' }}>Internships</span>
+        </h1>
+
+        {/* Search Filters */}
+        <div style={{ display: 'flex', gap: '16px', maxWidth: '700px' }}>
+          <input
+            type="text"
+            placeholder="Search by role, company or skill…"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            style={{
+              flex: 1, padding: '12px 16px',
+              background: 'var(--bg3)', border: '1px solid var(--border)',
+              borderRadius: '8px', color: 'var(--text)', fontSize: '14px',
+              outline: 'none'
+            }}
+          />
+          <input
+            type="text"
+            placeholder="Location…"
+            value={location}
+            onChange={e => setLocation(e.target.value)}
+            style={{
+              width: '160px', padding: '12px 16px',
+              background: 'var(--bg3)', border: '1px solid var(--border)',
+              borderRadius: '8px', color: 'var(--text)', fontSize: '14px',
+              outline: 'none'
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Results */}
+      <div style={{ padding: '32px 60px' }}>
+
+        <p style={{ color: 'var(--text2)', fontSize: '14px', marginBottom: '24px' }}>
+          Showing {filtered.length} internship{filtered.length !== 1 ? 's' : ''}
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {filtered.length === 0 ? (
+            <div style={{
+              textAlign: 'center', padding: '60px',
+              color: 'var(--text2)', fontSize: '16px'
+            }}>
+              No internships found. Try a different search!
+            </div>
+          ) : (
+            filtered.map(internship => (
+              <div key={internship.id} style={{
+                background: 'var(--bg2)', border: '1px solid var(--border)',
+                borderRadius: '12px', padding: '24px',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                transition: 'border-color 0.2s'
+              }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+              >
+                <div>
+                  <h3 style={{ fontSize: '18px', marginBottom: '4px', fontFamily: 'Space Grotesk' }}>
+                    {internship.title}
+                  </h3>
+                  <p style={{ color: 'var(--text2)', fontSize: '14px', marginBottom: '12px' }}>
+                    {internship.company} • {internship.location} • {internship.duration}
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {internship.skills.map(skill => (
+                      <span key={skill} style={{
+                        padding: '4px 10px', background: 'var(--bg3)',
+                        border: '1px solid var(--border)', borderRadius: '20px',
+                        fontSize: '12px', color: 'var(--accent2)'
+                      }}>
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ textAlign: 'right', minWidth: '140px' }}>
+                  <p style={{ color: 'var(--success)', fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>
+                    {internship.stipend}
+                  </p>
+                  <button style={{
+                    padding: '8px 20px', background: 'var(--accent)',
+                    border: 'none', borderRadius: '8px',
+                    color: '#fff', fontSize: '13px', fontWeight: '600'
+                  }}>
+                    Apply Now
+                  </button>
+                </div>
+
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default Search
