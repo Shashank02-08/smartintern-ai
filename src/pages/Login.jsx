@@ -10,13 +10,31 @@ function Login() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  function handleLogin() {
+  async function handleLogin() {
     if (!form.email || !form.password) {
       setError('Please fill in all fields')
       return
     }
-    // Backend connection will go here later
-    alert('Login coming soon!')
+    try {
+      const res = await fetch('https://smartintern-backend-j6gf.onrender.com/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Login failed')
+        return
+      }
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      navigate('/dashboard')
+    } catch (err) {
+      setError('Something went wrong. Please try again.')
+    }
   }
 
   return (

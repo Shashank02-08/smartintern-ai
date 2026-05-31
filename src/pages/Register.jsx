@@ -15,7 +15,7 @@ function Register() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  function handleRegister() {
+  async function handleRegister() {
     if (!form.name || !form.email || !form.password || !form.confirmPassword) {
       setError('Please fill in all fields')
       return
@@ -24,8 +24,27 @@ function Register() {
       setError('Passwords do not match')
       return
     }
-    // Backend connection will go here later
-    alert('Register coming soon!')
+    try {
+      const res = await fetch('https://smartintern-backend-j6gf.onrender.com/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password
+        })
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Registration failed')
+        return
+      }
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      navigate('/resume')
+    } catch (err) {
+      setError('Something went wrong. Please try again.')
+    }
   }
 
   const inputStyle = {
