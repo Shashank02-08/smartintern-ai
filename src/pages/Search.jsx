@@ -15,11 +15,22 @@ function Search() {
   async function fetchInternships() {
     try {
       setLoading(true)
-      const res = await fetch(`https://smartintern-backend-j6gf.onrender.com/api/internships?q=${query}&location=${location}`)
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 60000)
+      const res = await fetch(
+        `https://smartintern-backend-j6gf.onrender.com/api/internships?q=${query}&location=${location}`,
+        { signal: controller.signal }
+      )
+      clearTimeout(timeout)
       const data = await res.json()
       setInternships(data)
     } catch (err) {
-      console.error('Failed to fetch internships:', err)
+      if (err.name === 'AbortError') {
+        console.log('Render waking up, retrying...')
+        fetchInternships()
+      } else {
+        console.error('Failed to fetch internships:', err)
+      }
     } finally {
       setLoading(false)
     }
@@ -114,7 +125,8 @@ function Search() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text2)' }}>
-              Loading internships...
+              <p style={{ fontSize: '16px', marginBottom: '8px' }}>Loading internships...</p>
+              <p style={{ fontSize: '13px', opacity: 0.6 }}>First load may take up to 60 seconds ☕</p>
             </div>
           ) : filtered.length === 0 ? (
             <div style={{
@@ -169,7 +181,6 @@ function Search() {
                     </button>
                   </a>
                 </div>
-
               </div>
             ))
           )}
