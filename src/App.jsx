@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -12,16 +12,17 @@ const BACKEND = 'https://smartintern-backend-j6gf.onrender.com'
 
 function App() {
   useEffect(() => {
-    // Wake up Render backend on app load
     fetch(`${BACKEND}/api/internships`).catch(() => {})
   }, [])
+
+  const isLoggedIn = !!localStorage.getItem('token')
 
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={isLoggedIn ? <Navigate to="/dashboard" /> : <Login />} />
+        <Route path="/register" element={isLoggedIn ? <Navigate to="/dashboard" /> : <Register />} />
         <Route path="/resume" element={<ResumeUpload />} />
         <Route path="/search" element={<Search />} />
         <Route path="/dashboard" element={<Dashboard />} />
