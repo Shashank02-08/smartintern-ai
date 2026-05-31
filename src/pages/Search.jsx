@@ -15,7 +15,7 @@ function Search() {
   async function fetchInternships() {
     try {
       setLoading(true)
-      const res = await fetch(`http://127.0.0.1:5000/api/internships?q=${query}&location=${location}`)
+      const res = await fetch(`https://smartintern-backend-j0gf.onrender.com/api/internships?q=${query}&location=${location}`)
       const data = await res.json()
       setInternships(data)
     } catch (err) {
