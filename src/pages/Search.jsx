@@ -1,21 +1,31 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-const DUMMY_INTERNSHIPS = [
-  { id: 1, title: 'Frontend Developer Intern', company: 'TechCorp', location: 'Remote', skills: ['React', 'CSS', 'JavaScript'], stipend: '₹15,000/month', duration: '3 months' },
-  { id: 2, title: 'Data Science Intern', company: 'DataWorks', location: 'Bangalore', skills: ['Python', 'ML', 'Pandas'], stipend: '₹20,000/month', duration: '6 months' },
-  { id: 3, title: 'Backend Developer Intern', company: 'Startup X', location: 'Remote', skills: ['Node.js', 'MongoDB', 'REST API'], stipend: '₹12,000/month', duration: '3 months' },
-  { id: 4, title: 'UI/UX Design Intern', company: 'DesignHub', location: 'Mumbai', skills: ['Figma', 'Adobe XD', 'Prototyping'], stipend: '₹10,000/month', duration: '2 months' },
-  { id: 5, title: 'Machine Learning Intern', company: 'AI Labs', location: 'Hyderabad', skills: ['Python', 'TensorFlow', 'NLP'], stipend: '₹25,000/month', duration: '6 months' },
-  { id: 6, title: 'Android Developer Intern', company: 'AppFactory', location: 'Pune', skills: ['Kotlin', 'Android', 'Firebase'], stipend: '₹18,000/month', duration: '4 months' },
-]
 
 function Search() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [location, setLocation] = useState('')
+  const [internships, setInternships] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const filtered = DUMMY_INTERNSHIPS.filter(i => {
+  useEffect(() => {
+    fetchInternships()
+  }, [])
+
+  async function fetchInternships() {
+    try {
+      setLoading(true)
+      const res = await fetch(`http://127.0.0.1:5000/api/internships?q=${query}&location=${location}`)
+      const data = await res.json()
+      setInternships(data)
+    } catch (err) {
+      console.error('Failed to fetch internships:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filtered = internships.filter(i => {
     const matchQuery = i.title.toLowerCase().includes(query.toLowerCase()) ||
       i.company.toLowerCase().includes(query.toLowerCase()) ||
       i.skills.some(s => s.toLowerCase().includes(query.toLowerCase()))
@@ -66,7 +76,6 @@ function Search() {
           Find <span style={{ color: 'var(--accent)' }}>Internships</span>
         </h1>
 
-        {/* Search Filters */}
         <div style={{ display: 'flex', gap: '16px', maxWidth: '700px' }}>
           <input
             type="text"
@@ -103,7 +112,11 @@ function Search() {
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text2)' }}>
+              Loading internships...
+            </div>
+          ) : filtered.length === 0 ? (
             <div style={{
               textAlign: 'center', padding: '60px',
               color: 'var(--text2)', fontSize: '16px'
@@ -111,8 +124,8 @@ function Search() {
               No internships found. Try a different search!
             </div>
           ) : (
-            filtered.map(internship => (
-              <div key={internship.id} style={{
+            filtered.map((internship, index) => (
+              <div key={internship._id || index} style={{
                 background: 'var(--bg2)', border: '1px solid var(--border)',
                 borderRadius: '12px', padding: '24px',
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -129,8 +142,8 @@ function Search() {
                     {internship.company} • {internship.location} • {internship.duration}
                   </p>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {internship.skills.map(skill => (
-                      <span key={skill} style={{
+                    {internship.skills.map((skill, i) => (
+                      <span key={i} style={{
                         padding: '4px 10px', background: 'var(--bg3)',
                         border: '1px solid var(--border)', borderRadius: '20px',
                         fontSize: '12px', color: 'var(--accent2)'
@@ -142,16 +155,19 @@ function Search() {
                 </div>
 
                 <div style={{ textAlign: 'right', minWidth: '140px' }}>
-                  <p style={{ color: 'var(--success)', fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>
+                  <p style={{ color: 'var(--success)', fontSize: '15px', fontWeight: '600', marginBottom: '12px' }}>
                     {internship.stipend}
                   </p>
-                  <button style={{
-                    padding: '8px 20px', background: 'var(--accent)',
-                    border: 'none', borderRadius: '8px',
-                    color: '#fff', fontSize: '13px', fontWeight: '600'
-                  }}>
-                    Apply Now
-                  </button>
+                  <a href={internship.apply_link} target="_blank" rel="noopener noreferrer">
+                    <button style={{
+                      padding: '8px 20px', background: 'var(--accent)',
+                      border: 'none', borderRadius: '8px',
+                      color: '#fff', fontSize: '13px', fontWeight: '600',
+                      cursor: 'pointer'
+                    }}>
+                      Apply Now
+                    </button>
+                  </a>
                 </div>
 
               </div>
