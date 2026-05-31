@@ -1,19 +1,79 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+
+const BACKEND = 'https://smartintern-backend-j6gf.onrender.com'
 
 function Profile() {
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
   const [profile, setProfile] = useState({
-    name: 'John Doe',
-    email: 'john@example.com',
-    phone: '+91 9876543210',
-    college: 'Delhi University',
-    degree: 'B.Tech Computer Science',
-    year: '3rd Year',
-    skills: ['React', 'JavaScript', 'Python', 'CSS', 'MongoDB'],
-    bio: 'Passionate developer looking for exciting internship opportunities in tech.'
+    name: '',
+    email: '',
+    phone: '',
+    college: '',
+    degree: '',
+    year: '',
+    skills: [],
+    bio: ''
   })
+
+  useEffect(() => {
+    fetchProfile()
+  }, [])
+
+  async function fetchProfile() {
+    const token = localStorage.getItem('token')
+    if (!token) { navigate('/login'); return }
+    try {
+      const res = await fetch(`${BACKEND}/api/profile`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await res.json()
+      if (!res.ok) { navigate('/login'); return }
+      setProfile({
+        name: data.name || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        college: data.college || '',
+        degree: data.degree || '',
+        year: data.year || '',
+        skills: data.skills || [],
+        bio: data.bio || ''
+      })
+    } catch (err) {
+      console.error('Failed to fetch profile:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function saveProfile() {
+    const token = localStorage.getItem('token')
+    if (!token) { navigate('/login'); return }
+    try {
+      setSaving(true)
+      const res = await fetch(`${BACKEND}/api/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(profile)
+      })
+      if (res.ok) {
+        setMessage('Profile saved!')
+        setEditing(false)
+        setTimeout(() => setMessage(''), 2000)
+      }
+    } catch (err) {
+      console.error('Failed to save profile:', err)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   function handleChange(e) {
     setProfile({ ...profile, [e.target.name]: e.target.value })
@@ -31,6 +91,16 @@ function Profile() {
     marginBottom: '6px', display: 'block',
     textTransform: 'uppercase', letterSpacing: '0.05em'
   }
+
+  if (loading) return (
+    <div style={{
+      minHeight: '100vh', background: 'var(--bg)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      color: 'var(--text2)', fontSize: '16px'
+    }}>
+      Loading profile...
+    </div>
+  )
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -62,6 +132,17 @@ function Profile() {
           }}>
             Search
           </button>
+          <button onClick={() => {
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+            navigate('/')
+          }} style={{
+            padding: '8px 20px', background: 'transparent',
+            border: '1px solid var(--danger)', borderRadius: '8px',
+            color: 'var(--danger)', fontSize: '14px'
+          }}>
+            Logout
+          </button>
         </div>
       </nav>
 
@@ -75,17 +156,22 @@ function Profile() {
           <h1 style={{ fontSize: '28px' }}>
             My <span style={{ color: 'var(--accent)' }}>Profile</span>
           </h1>
-          <button
-            onClick={() => setEditing(!editing)}
-            style={{
-              padding: '8px 20px',
-              background: editing ? 'var(--success)' : 'var(--accent)',
-              border: 'none', borderRadius: '8px',
-              color: '#fff', fontSize: '14px', fontWeight: '600'
-            }}
-          >
-            {editing ? '✅ Save Profile' : '✏️ Edit Profile'}
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {message && (
+              <span style={{ fontSize: '14px', color: 'var(--success)' }}>{message}</span>
+            )}
+            <button
+              onClick={() => editing ? saveProfile() : setEditing(true)}
+              style={{
+                padding: '8px 20px',
+                background: editing ? 'var(--success)' : 'var(--accent)',
+                border: 'none', borderRadius: '8px',
+                color: '#fff', fontSize: '14px', fontWeight: '600'
+              }}
+            >
+              {saving ? 'Saving...' : editing ? '✅ Save Profile' : '✏️ Edit Profile'}
+            </button>
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
@@ -117,7 +203,7 @@ function Profile() {
                 <h2 style={{ fontSize: '20px', marginBottom: '4px' }}>{profile.name}</h2>
               )}
               <p style={{ color: 'var(--text2)', fontSize: '14px', marginTop: '4px' }}>
-                {profile.degree}
+                {profile.degree || 'No degree added yet'}
               </p>
             </div>
 
@@ -145,7 +231,9 @@ function Profile() {
                         style={inputStyle}
                       />
                     ) : (
-                      <p style={{ fontSize: '14px', color: 'var(--text)' }}>{profile[field.name]}</p>
+                      <p style={{ fontSize: '14px', color: 'var(--text)' }}>
+                        {profile[field.name] || 'Not added yet'}
+                      </p>
                     )}
                   </div>
                 ))}
@@ -182,7 +270,9 @@ function Profile() {
                         style={inputStyle}
                       />
                     ) : (
-                      <p style={{ fontSize: '14px', color: 'var(--text)' }}>{profile[field.name]}</p>
+                      <p style={{ fontSize: '14px', color: 'var(--text)' }}>
+                        {profile[field.name] || 'Not added yet'}
+                      </p>
                     )}
                   </div>
                 ))}
@@ -197,16 +287,43 @@ function Profile() {
               <h3 style={{ fontSize: '16px', marginBottom: '16px', fontFamily: 'Space Grotesk' }}>
                 Skills
               </h3>
+              {editing && (
+                <input
+                  type="text"
+                  placeholder="Type a skill and press Enter"
+                  style={{ ...inputStyle, marginBottom: '12px' }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && e.target.value.trim()) {
+                      const skill = e.target.value.trim()
+                      if (!profile.skills.includes(skill)) {
+                        setProfile({ ...profile, skills: [...profile.skills, skill] })
+                      }
+                      e.target.value = ''
+                    }
+                  }}
+                />
+              )}
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {profile.skills.map(skill => (
-                  <span key={skill} style={{
-                    padding: '6px 12px', background: 'var(--bg3)',
-                    border: '1px solid var(--accent)', borderRadius: '20px',
-                    fontSize: '13px', color: 'var(--accent2)'
-                  }}>
-                    {skill}
-                  </span>
-                ))}
+                {profile.skills.length === 0 ? (
+                  <p style={{ fontSize: '14px', color: 'var(--text3)' }}>No skills added yet</p>
+                ) : (
+                  profile.skills.map((skill, i) => (
+                    <span key={i} style={{
+                      padding: '6px 12px', background: 'var(--bg3)',
+                      border: '1px solid var(--accent)', borderRadius: '20px',
+                      fontSize: '13px', color: 'var(--accent2)',
+                      display: 'flex', alignItems: 'center', gap: '6px'
+                    }}>
+                      {skill}
+                      {editing && (
+                        <span
+                          onClick={() => setProfile({ ...profile, skills: profile.skills.filter((_, j) => j !== i) })}
+                          style={{ cursor: 'pointer', opacity: 0.6, fontSize: '14px' }}
+                        >×</span>
+                      )}
+                    </span>
+                  ))
+                )}
               </div>
             </div>
 
@@ -228,7 +345,7 @@ function Profile() {
                 />
               ) : (
                 <p style={{ fontSize: '14px', color: 'var(--text2)', lineHeight: '1.7' }}>
-                  {profile.bio}
+                  {profile.bio || 'No bio added yet'}
                 </p>
               )}
             </div>
@@ -248,7 +365,7 @@ function Profile() {
               Resume
             </h3>
             <p style={{ fontSize: '13px', color: 'var(--text2)' }}>
-              Last updated — upload a new one anytime
+              Upload your resume for AI matching
             </p>
           </div>
           <button onClick={() => navigate('/resume')} style={{
