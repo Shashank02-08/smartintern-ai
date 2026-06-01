@@ -1,18 +1,22 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+const BACKEND = 'https://smartintern-backend-j6gf.onrender.com'
+
 function ResumeUpload() {
   const navigate = useNavigate()
   const [file, setFile] = useState(null)
   const [dragging, setDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploaded, setUploaded] = useState(false)
+  const [error, setError] = useState('')
 
   function handleFile(selectedFile) {
     if (selectedFile && selectedFile.type === 'application/pdf') {
       setFile(selectedFile)
+      setError('')
     } else {
-      alert('Please upload a PDF file only')
+      setError('Please upload a PDF file only')
     }
   }
 
@@ -23,14 +27,44 @@ function ResumeUpload() {
     handleFile(dropped)
   }
 
-  function handleUpload() {
+  async function handleUpload() {
     if (!file) return
+
+    const token = localStorage.getItem('token')
+    if (!token) {
+      navigate('/login')
+      return
+    }
+
     setUploading(true)
-    // Backend connection will go here later
-    setTimeout(() => {
-      setUploading(false)
+    setError('')
+
+    try {
+      const formData = new FormData()
+      formData.append('resume', file)
+
+      const res = await fetch(`${BACKEND}/api/resume/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Upload failed')
+        return
+      }
+
       setUploaded(true)
-    }, 2000)
+
+    } catch (err) {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
@@ -46,7 +80,10 @@ function ResumeUpload() {
         padding: '20px 60px', borderBottom: '1px solid var(--border)',
         background: 'var(--bg2)'
       }}>
-        <div style={{ fontFamily: 'Space Mono', fontSize: '20px', color: 'var(--accent)' }}>
+        <div
+          onClick={() => navigate('/')}
+          style={{ fontFamily: 'Space Mono', fontSize: '20px', color: 'var(--accent)', cursor: 'pointer' }}
+        >
           SmartIntern<span style={{ color: 'var(--text)' }}>AI</span>
         </div>
         <button onClick={() => navigate('/dashboard')} style={{
@@ -74,7 +111,6 @@ function ResumeUpload() {
           </p>
         </div>
 
-        {/* Upload Box */}
         {!uploaded ? (
           <div style={{ width: '100%', maxWidth: '500px' }}>
 
@@ -110,6 +146,12 @@ function ResumeUpload() {
               />
             </div>
 
+            {error && (
+              <p style={{ color: '#f87171', fontSize: '13px', marginTop: '12px', textAlign: 'center' }}>
+                {error}
+              </p>
+            )}
+
             {/* Upload Button */}
             {file && (
               <button
@@ -125,7 +167,7 @@ function ResumeUpload() {
                   transition: 'all 0.2s'
                 }}
               >
-                {uploading ? 'Analyzing Resume...' : 'Upload & Analyze →'}
+                {uploading ? '🔍 Analyzing Resume...' : 'Upload & Analyze →'}
               </button>
             )}
 
@@ -155,9 +197,7 @@ function ResumeUpload() {
               View My Matches →
             </button>
           </div>
-
         )}
-
       </div>
     </div>
   )
