@@ -20,10 +20,25 @@ function Register() {
       setError('Please fill in all fields')
       return
     }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(form.email)) {
+      setError('Please enter a valid email address')
+      return
+    }
+
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match')
       return
     }
+
+    // Password length check
+    if (form.password.length < 6) {
+      setError('Password must be at least 6 characters')
+      return
+    }
+    
     try {
       const res = await fetch('https://smartintern-backend-j6gf.onrender.com/api/register', {
         method: 'POST',
