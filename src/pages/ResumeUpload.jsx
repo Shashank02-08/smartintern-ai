@@ -184,9 +184,16 @@ function ResumeUpload() {
             <h2 style={{ fontSize: '24px', marginBottom: '12px', color: 'var(--success)' }}>
               Resume Uploaded!
             </h2>
-            <p style={{ color: 'var(--text2)', fontSize: '14px', marginBottom: '32px' }}>
+            <p style={{ color: 'var(--text2)', fontSize: '14px', marginBottom: '16px' }}>
               Your resume has been analyzed successfully. Let's find your perfect internship!
             </p>
+            <div style={{
+              background: 'var(--bg3)', border: '1px solid var(--border)',
+              borderRadius: '8px', padding: '12px', marginBottom: '16px',
+              fontSize: '12px', color: 'var(--accent2)', textAlign: 'left'
+            }}>
+              ✅ Text extracted from your resume and saved to database!
+            </div>
             <button onClick={() => navigate('/dashboard')} style={{
               width: '100%', padding: '13px',
               background: 'var(--accent)', border: 'none',
