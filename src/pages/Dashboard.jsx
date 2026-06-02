@@ -57,6 +57,14 @@ function Dashboard() {
 
   const bestMatch = matches.length > 0 ? matches[0].match_score : 0
 
+  // ── Logout handler ──
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    window.dispatchEvent(new Event('storage')) // tells App.jsx to re-check auth
+    navigate('/login')
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
 
@@ -76,16 +84,23 @@ function Dashboard() {
           <button onClick={() => navigate('/search')} style={{
             padding: '8px 20px', background: 'transparent',
             border: '1px solid var(--border)', borderRadius: '8px',
-            color: 'var(--text)', fontSize: '14px'
+            color: 'var(--text)', fontSize: '14px', cursor: 'pointer'
           }}>
             Search
           </button>
           <button onClick={() => navigate('/profile')} style={{
             padding: '8px 20px', background: 'var(--accent)',
             border: 'none', borderRadius: '8px',
-            color: '#fff', fontSize: '14px'
+            color: '#fff', fontSize: '14px', cursor: 'pointer'
           }}>
             Profile
+          </button>
+          <button onClick={handleLogout} style={{
+            padding: '8px 20px', background: 'transparent',
+            border: '1px solid #f87171', borderRadius: '8px',
+            color: '#f87171', fontSize: '14px', cursor: 'pointer'
+          }}>
+            Logout
           </button>
         </div>
       </nav>
@@ -121,7 +136,7 @@ function Dashboard() {
             <button onClick={() => navigate('/resume')} style={{
               padding: '12px 28px', background: 'var(--accent)',
               border: 'none', borderRadius: '8px', color: '#fff',
-              fontSize: '15px', fontWeight: '600'
+              fontSize: '15px', fontWeight: '600', cursor: 'pointer'
             }}>
               Upload Resume →
             </button>

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -6,16 +7,22 @@ import ResumeUpload from './pages/ResumeUpload'
 import Search from './pages/Search'
 import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
-import { useEffect } from 'react'
 
 const BACKEND = 'https://smartintern-backend-j6gf.onrender.com'
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'))
+
   useEffect(() => {
     fetch(`${BACKEND}/api/internships`).catch(() => {})
-  }, [])
 
-  const isLoggedIn = !!localStorage.getItem('token')
+    // Listen for storage changes (logout from any component)
+    const handleStorage = () => {
+      setIsLoggedIn(!!localStorage.getItem('token'))
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [])
 
   return (
     <BrowserRouter>

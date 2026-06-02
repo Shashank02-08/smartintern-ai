@@ -79,6 +79,14 @@ function Profile() {
     setProfile({ ...profile, [e.target.name]: e.target.value })
   }
 
+  // ── Logout handler ──
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    window.dispatchEvent(new Event('storage')) // tells App.jsx to re-check auth
+    navigate('/login')
+  }
+
   const inputStyle = {
     width: '100%', padding: '10px 14px',
     background: 'var(--bg3)', border: '1px solid var(--border)',
@@ -121,25 +129,21 @@ function Profile() {
           <button onClick={() => navigate('/dashboard')} style={{
             padding: '8px 20px', background: 'transparent',
             border: '1px solid var(--border)', borderRadius: '8px',
-            color: 'var(--text)', fontSize: '14px'
+            color: 'var(--text)', fontSize: '14px', cursor: 'pointer'
           }}>
             Dashboard
           </button>
           <button onClick={() => navigate('/search')} style={{
             padding: '8px 20px', background: 'transparent',
             border: '1px solid var(--border)', borderRadius: '8px',
-            color: 'var(--text)', fontSize: '14px'
+            color: 'var(--text)', fontSize: '14px', cursor: 'pointer'
           }}>
             Search
           </button>
-          <button onClick={() => {
-            localStorage.removeItem('token')
-            localStorage.removeItem('user')
-            navigate('/')
-          }} style={{
+          <button onClick={handleLogout} style={{
             padding: '8px 20px', background: 'transparent',
-            border: '1px solid var(--danger)', borderRadius: '8px',
-            color: 'var(--danger)', fontSize: '14px'
+            border: '1px solid #f87171', borderRadius: '8px',
+            color: '#f87171', fontSize: '14px', cursor: 'pointer'
           }}>
             Logout
           </button>
@@ -166,7 +170,8 @@ function Profile() {
                 padding: '8px 20px',
                 background: editing ? 'var(--success)' : 'var(--accent)',
                 border: 'none', borderRadius: '8px',
-                color: '#fff', fontSize: '14px', fontWeight: '600'
+                color: '#fff', fontSize: '14px', fontWeight: '600',
+                cursor: 'pointer'
               }}
             >
               {saving ? 'Saving...' : editing ? '✅ Save Profile' : '✏️ Edit Profile'}
@@ -371,7 +376,8 @@ function Profile() {
           <button onClick={() => navigate('/resume')} style={{
             padding: '10px 20px', background: 'var(--accent)',
             border: 'none', borderRadius: '8px',
-            color: '#fff', fontSize: '14px', fontWeight: '600'
+            color: '#fff', fontSize: '14px', fontWeight: '600',
+            cursor: 'pointer'
           }}>
             Update Resume →
           </button>
