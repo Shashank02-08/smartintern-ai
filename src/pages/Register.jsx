@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatedButton } from '../components/AnimatedCard'
 
 const API = 'https://smartintern-backend-j6gf.onrender.com'
 
@@ -22,7 +24,6 @@ function Register() {
     setError('')
   }
 
-  // CLIENT-SIDE VALIDATION (same as original)
   function validate() {
     if (!form.name || !form.email || !form.password || !form.confirmPassword) {
       setError('Please fill in all fields'); return false
@@ -40,7 +41,6 @@ function Register() {
     return true
   }
 
-  // STEP 1: Send OTP
   async function handleSendOtp() {
     if (!validate()) return
     setLoading(true)
@@ -49,11 +49,7 @@ function Register() {
       const res = await fetch(`${API}/api/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          password: form.password
-        })
+        body: JSON.stringify({ name: form.name, email: form.email, password: form.password })
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Failed to send OTP'); return }
@@ -66,7 +62,6 @@ function Register() {
     }
   }
 
-  // STEP 2: Verify OTP
   async function handleVerifyOtp() {
     if (!otp || otp.length !== 6) { setError('Please enter the 6-digit OTP'); return }
     setLoading(true)
@@ -81,7 +76,8 @@ function Register() {
       if (!res.ok) { setError(data.error || 'Verification failed'); return }
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
-      navigate('/resume') // ← same as original
+      window.dispatchEvent(new Event('storage'))
+      navigate('/resume')
     } catch {
       setError('Something went wrong. Please try again.')
     } finally {
@@ -107,11 +103,7 @@ function Register() {
       const res = await fetch(`${API}/api/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          password: form.password
-        })
+        body: JSON.stringify({ name: form.name, email: form.email, password: form.password })
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Failed to resend OTP'); return }
@@ -123,12 +115,11 @@ function Register() {
     }
   }
 
-  // ── Styles (exactly your originals) ──
   const inputStyle = {
     width: '100%', padding: '12px 16px',
     background: 'var(--bg3)', border: '1px solid var(--border)',
     borderRadius: '8px', color: 'var(--text)', fontSize: '14px',
-    outline: 'none'
+    outline: 'none', boxSizing: 'border-box'
   }
 
   const labelStyle = {
@@ -136,138 +127,264 @@ function Register() {
     marginBottom: '6px', display: 'block'
   }
 
+  // Stagger delays for form fields
+  const fieldDelays = [0.1, 0.18, 0.26, 0.34]
+
   return (
     <div style={{
       minHeight: '100vh', display: 'flex',
       alignItems: 'center', justifyContent: 'center',
       background: 'radial-gradient(ellipse at top, #1a1a2e 0%, var(--bg) 70%)',
-      padding: '40px 20px'
+      padding: '20px'
     }}>
-      <div style={{
-        width: '100%', maxWidth: '420px',
-        background: 'var(--bg2)', border: '1px solid var(--border)',
-        borderRadius: '16px', padding: '40px'
-      }}>
-
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+      {/* Card animates in — fade up + scale */}
+      <motion.div
+        initial={{ opacity: 0, y: 28, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
+        style={{
+          width: '100%', maxWidth: '420px',
+          background: 'var(--bg2)', border: '1px solid var(--border)',
+          borderRadius: '16px', padding: 'clamp(28px, 5vw, 40px)'
+        }}
+      >
+        {/* Logo — stagger delay 0 */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+          style={{ textAlign: 'center', marginBottom: '32px' }}
+        >
           <div
             onClick={() => navigate('/')}
             style={{
               fontFamily: 'Space Mono', fontSize: '22px',
               color: 'var(--accent)', marginBottom: '8px', cursor: 'pointer'
-            }}>
+            }}
+          >
             SmartIntern<span style={{ color: 'var(--text)' }}>AI</span>
           </div>
           <p style={{ color: 'var(--text2)', fontSize: '14px' }}>
-            {step === 1 ? 'Create your account to get started' : `Enter the code sent to ${form.email}`}
+            {step === 1
+              ? 'Create your account to get started'
+              : `Enter the code sent to ${form.email}`}
           </p>
-        </div>
+        </motion.div>
 
-        {step === 1 ? (
-          /* ── STEP 1: Registration Form ── */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <label style={labelStyle}>Full Name</label>
-              <input type="text" name="name" placeholder="John Doe"
-                value={form.name} onChange={handleChange} style={inputStyle} />
-            </div>
-            <div>
-              <label style={labelStyle}>Email</label>
-              <input type="email" name="email" placeholder="you@example.com"
-                value={form.email} onChange={handleChange} style={inputStyle} />
-            </div>
-            <div>
-              <label style={labelStyle}>Password</label>
-              <input type="password" name="password" placeholder="••••••••"
-                value={form.password} onChange={handleChange} style={inputStyle} />
-            </div>
-            <div>
-              <label style={labelStyle}>Confirm Password</label>
-              <input type="password" name="confirmPassword" placeholder="••••••••"
-                value={form.confirmPassword} onChange={handleChange} style={inputStyle} />
-            </div>
+        {/* Step content — AnimatePresence for step switch */}
+        <AnimatePresence mode="wait">
+          {step === 1 ? (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.3 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+            >
+              {/* Full Name */}
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: fieldDelays[0] }}
+              >
+                <label style={labelStyle}>Full Name</label>
+                <input type="text" name="name" placeholder="John Doe"
+                  value={form.name} onChange={handleChange} style={inputStyle} />
+              </motion.div>
 
-            {error && <p style={{ color: '#f87171', fontSize: '13px' }}>{error}</p>}
+              {/* Email */}
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: fieldDelays[1] }}
+              >
+                <label style={labelStyle}>Email</label>
+                <input type="email" name="email" placeholder="you@example.com"
+                  value={form.email} onChange={handleChange} style={inputStyle} />
+              </motion.div>
 
-            <button onClick={handleSendOtp} disabled={loading} style={{
-              width: '100%', padding: '13px',
-              background: 'var(--accent)', border: 'none',
-              borderRadius: '8px', color: '#fff',
-              fontSize: '15px', fontWeight: '600',
-              boxShadow: '0 0 20px var(--glow)',
-              marginTop: '8px', cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.7 : 1
-            }}>
-              {loading ? 'Sending OTP...' : 'Send Verification Code →'}
-            </button>
-          </div>
-        ) : (
-          /* ── STEP 2: OTP Verification ── */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <label style={labelStyle}>6-Digit Verification Code</label>
-              <input
-                type="text" placeholder="000000"
-                value={otp}
-                onChange={e => { setOtp(e.target.value); setError('') }}
-                maxLength={6}
-                style={{
-                  ...inputStyle,
-                  textAlign: 'center', fontSize: '28px',
-                  fontWeight: '700', letterSpacing: '12px'
-                }}
-              />
-            </div>
+              {/* Password */}
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: fieldDelays[2] }}
+              >
+                <label style={labelStyle}>Password</label>
+                <input type="password" name="password" placeholder="••••••••"
+                  value={form.password} onChange={handleChange} style={inputStyle} />
+              </motion.div>
 
-            {error && <p style={{ color: '#f87171', fontSize: '13px' }}>{error}</p>}
+              {/* Confirm Password */}
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: fieldDelays[3] }}
+              >
+                <label style={labelStyle}>Confirm Password</label>
+                <input type="password" name="confirmPassword" placeholder="••••••••"
+                  value={form.confirmPassword} onChange={handleChange} style={inputStyle} />
+              </motion.div>
 
-            <button onClick={handleVerifyOtp} disabled={loading || otp.length !== 6} style={{
-              width: '100%', padding: '13px',
-              background: 'var(--accent)', border: 'none',
-              borderRadius: '8px', color: '#fff',
-              fontSize: '15px', fontWeight: '600',
-              boxShadow: '0 0 20px var(--glow)',
-              marginTop: '8px', cursor: (loading || otp.length !== 6) ? 'not-allowed' : 'pointer',
-              opacity: (loading || otp.length !== 6) ? 0.7 : 1
-            }}>
-              {loading ? 'Verifying...' : 'Verify & Create Account ✓'}
-            </button>
+              {/* Error — slides in from left */}
+              <AnimatePresence>
+                {error && (
+                  <motion.p
+                    key="err"
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -12 }}
+                    transition={{ duration: 0.25 }}
+                    style={{ color: '#f87171', fontSize: '13px', margin: 0 }}
+                  >
+                    {error}
+                  </motion.p>
+                )}
+              </AnimatePresence>
 
-            {/* Resend + Back */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-              <span
-                onClick={() => { setStep(1); setError(''); setOtp('') }}
-                style={{ color: 'var(--text2)', fontSize: '13px', cursor: 'pointer' }}>
-                ← Change email
-              </span>
-              <span
-                onClick={handleResend}
-                style={{
-                  color: resendCooldown > 0 ? 'var(--text2)' : 'var(--accent)',
-                  fontSize: '13px',
-                  cursor: resendCooldown > 0 ? 'default' : 'pointer'
-                }}>
-                {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend OTP'}
-              </span>
-            </div>
-          </div>
-        )}
+              {/* CTA Button */}
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.42 }}
+                style={{ marginTop: '8px' }}
+              >
+                <AnimatedButton
+                  onClick={handleSendOtp}
+                  disabled={loading}
+                  style={{
+                    width: '100%', padding: '13px',
+                    background: 'var(--accent)', border: 'none',
+                    borderRadius: '8px', color: '#fff',
+                    fontSize: '15px', fontWeight: '600',
+                    boxShadow: '0 0 20px var(--glow)',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    opacity: loading ? 0.7 : 1
+                  }}
+                >
+                  {loading ? 'Sending OTP...' : 'Send Verification Code →'}
+                </AnimatedButton>
+              </motion.div>
+            </motion.div>
+
+          ) : (
+            /* ── STEP 2: OTP ── */
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.3 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+            >
+              {/* OTP input stagger */}
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+              >
+                <label style={labelStyle}>6-Digit Verification Code</label>
+                <input
+                  type="text"
+                  placeholder="000000"
+                  value={otp}
+                  onChange={e => { setOtp(e.target.value); setError('') }}
+                  maxLength={6}
+                  style={{
+                    ...inputStyle,
+                    textAlign: 'center', fontSize: '28px',
+                    fontWeight: '700', letterSpacing: '12px'
+                  }}
+                />
+              </motion.div>
+
+              {/* Error */}
+              <AnimatePresence>
+                {error && (
+                  <motion.p
+                    key="err2"
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -12 }}
+                    transition={{ duration: 0.25 }}
+                    style={{ color: '#f87171', fontSize: '13px', margin: 0 }}
+                  >
+                    {error}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+
+              {/* Verify Button */}
+              <motion.div
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.18 }}
+                style={{ marginTop: '8px' }}
+              >
+                <AnimatedButton
+                  onClick={handleVerifyOtp}
+                  disabled={loading || otp.length !== 6}
+                  style={{
+                    width: '100%', padding: '13px',
+                    background: 'var(--accent)', border: 'none',
+                    borderRadius: '8px', color: '#fff',
+                    fontSize: '15px', fontWeight: '600',
+                    boxShadow: '0 0 20px var(--glow)',
+                    cursor: (loading || otp.length !== 6) ? 'not-allowed' : 'pointer',
+                    opacity: (loading || otp.length !== 6) ? 0.7 : 1
+                  }}
+                >
+                  {loading ? 'Verifying...' : 'Verify & Create Account ✓'}
+                </AnimatedButton>
+              </motion.div>
+
+              {/* Resend + Back */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4, delay: 0.26 }}
+                style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}
+              >
+                <motion.span
+                  onClick={() => { setStep(1); setError(''); setOtp('') }}
+                  whileHover={{ opacity: 0.7 }}
+                  style={{ color: 'var(--text2)', fontSize: '13px', cursor: 'pointer' }}
+                >
+                  ← Change email
+                </motion.span>
+                <motion.span
+                  onClick={handleResend}
+                  whileHover={resendCooldown === 0 ? { opacity: 0.75 } : {}}
+                  style={{
+                    color: resendCooldown > 0 ? 'var(--text2)' : 'var(--accent)',
+                    fontSize: '13px',
+                    cursor: resendCooldown > 0 ? 'default' : 'pointer'
+                  }}
+                >
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend OTP'}
+                </motion.span>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Footer */}
-        <p style={{
-          textAlign: 'center', marginTop: '24px',
-          fontSize: '14px', color: 'var(--text2)'
-        }}>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.5 }}
+          style={{ textAlign: 'center', marginTop: '24px', fontSize: '14px', color: 'var(--text2)' }}
+        >
           Already have an account?{' '}
-          <span
+          <motion.span
             onClick={() => navigate('/login')}
-            style={{ color: 'var(--accent)', cursor: 'pointer' }}>
+            whileHover={{ opacity: 0.75 }}
+            style={{ color: 'var(--accent)', cursor: 'pointer' }}
+          >
             Sign in here
-          </span>
-        </p>
-
-      </div>
+          </motion.span>
+        </motion.p>
+      </motion.div>
     </div>
   )
 }
