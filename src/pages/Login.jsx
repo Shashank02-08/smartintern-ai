@@ -91,30 +91,24 @@ function Login() {
   }
 
   async function handleVerifyResetOtp() {
-    if (fpOtp.length !== 6) { setFpError('Please enter the 6-digit OTP'); return }
-    setFpLoading(true)
-    setFpError('')
-    try {
-      // Just validate OTP exists — actual reset happens in next step
-      const res = await fetch(`${API}/api/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: fpEmail, otp: fpOtp, new_password: 'CHECK_ONLY_PLACEHOLDER_12345' })
-      })
-      const data = await res.json()
-      // If OTP is wrong/expired it returns error, otherwise move to password step
-      if (data.error && (data.error.includes('Invalid') || data.error.includes('expired') || data.error.includes('not found'))) {
-        setFpError(data.error); return
-      }
-      // OTP valid — but we used a placeholder password, so go to password step
-      // Actually let's just move forward and do the real reset in next step
-      setForgotStep('password')
-    } catch {
-      setFpError('Something went wrong. Please try again.')
-    } finally {
-      setFpLoading(false)
-    }
+  if (fpOtp.length !== 6) { setFpError('Please enter the 6-digit OTP'); return }
+  setFpLoading(true)
+  setFpError('')
+  try {
+    const res = await fetch(`${API}/api/verify-reset-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: fpEmail, otp: fpOtp })
+    })
+    const data = await res.json()
+    if (!res.ok) { setFpError(data.error || 'Invalid OTP'); return }
+    setForgotStep('password')
+  } catch {
+    setFpError('Something went wrong. Please try again.')
+  } finally {
+    setFpLoading(false)
   }
+}
 
   async function handleResetPassword() {
     if (!fpPassword || !fpConfirm) { setFpError('Please fill in all fields'); return }
