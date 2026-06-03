@@ -283,6 +283,7 @@ function Dashboard() {
                           display: 'block', background: '#fff'
                         }}
                       >
+                        {/* Mobile fallback — Google Docs viewer */}
                         <div style={{
                           height: '160px', display: 'flex', flexDirection: 'column',
                           alignItems: 'center', justifyContent: 'center', gap: '12px',
@@ -290,21 +291,23 @@ function Dashboard() {
                         }}>
                           <span style={{ fontSize: '32px' }}>📄</span>
                           <p>Browser can't preview PDF inline.</p>
-                          <AnimatedButton onClick={async () => {
-                            const token = localStorage.getItem('token')
-                            const res = await fetch(`${BACKEND}/api/resume/file`, {
-                              headers: { 'Authorization': `Bearer ${token}` }
-                            })
-                            const blob = await res.blob()
-                            const url = URL.createObjectURL(blob)
-                            const a = document.createElement('a')
-                            a.href = url; a.download = 'resume.pdf'; a.click()
-                            URL.revokeObjectURL(url)
-                          }} style={{
-                            padding: '8px 20px', background: 'var(--accent)',
-                            border: 'none', borderRadius: '8px', color: '#fff',
-                            fontSize: '13px', cursor: 'pointer'
-                          }}>⬇ Download to View</AnimatedButton>
+                          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                            <AnimatedButton onClick={async () => {
+                              const token = localStorage.getItem('token')
+                              const res = await fetch(`${BACKEND}/api/resume/file`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                              })
+                              const blob = await res.blob()
+                              const url = URL.createObjectURL(blob)
+                              const a = document.createElement('a')
+                              a.href = url; a.download = 'resume.pdf'; a.click()
+                              URL.revokeObjectURL(url)
+                            }} style={{
+                              padding: '8px 20px', background: 'var(--accent)',
+                              border: 'none', borderRadius: '8px', color: '#fff',
+                              fontSize: '13px', cursor: 'pointer'
+                            }}>⬇ Download to View</AnimatedButton>
+                          </div>
                         </div>
                       </object>
                     </motion.div>
