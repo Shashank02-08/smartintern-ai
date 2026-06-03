@@ -7,7 +7,7 @@ const API = 'https://smartintern-backend-j6gf.onrender.com'
 
 function Register() {
   const navigate = useNavigate()
-  const [step, setStep] = useState(1) // 1 = form, 2 = OTP
+  const [step, setStep] = useState(1)
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -18,6 +18,7 @@ function Register() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
+  const [slowWarning, setSlowWarning] = useState(false)
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -45,6 +46,10 @@ function Register() {
     if (!validate()) return
     setLoading(true)
     setError('')
+    setSlowWarning(false)
+
+    const wakeTimer = setTimeout(() => setSlowWarning(true), 5000)
+
     try {
       const res = await fetch(`${API}/api/send-otp`, {
         method: 'POST',
@@ -58,6 +63,8 @@ function Register() {
     } catch {
       setError('Something went wrong. Please try again.')
     } finally {
+      clearTimeout(wakeTimer)
+      setSlowWarning(false)
       setLoading(false)
     }
   }
@@ -127,7 +134,6 @@ function Register() {
     marginBottom: '6px', display: 'block'
   }
 
-  // Stagger delays for form fields
   const fieldDelays = [0.1, 0.18, 0.26, 0.34]
 
   return (
@@ -137,7 +143,6 @@ function Register() {
       background: 'radial-gradient(ellipse at top, #1a1a2e 0%, var(--bg) 70%)',
       padding: '20px'
     }}>
-      {/* Card animates in — fade up + scale */}
       <motion.div
         initial={{ opacity: 0, y: 28, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -148,7 +153,7 @@ function Register() {
           borderRadius: '16px', padding: 'clamp(28px, 5vw, 40px)'
         }}
       >
-        {/* Logo — stagger delay 0 */}
+        {/* Logo */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -171,7 +176,7 @@ function Register() {
           </p>
         </motion.div>
 
-        {/* Step content — AnimatePresence for step switch */}
+        {/* Step content */}
         <AnimatePresence mode="wait">
           {step === 1 ? (
             <motion.div
@@ -226,7 +231,7 @@ function Register() {
                   value={form.confirmPassword} onChange={handleChange} style={inputStyle} />
               </motion.div>
 
-              {/* Error — slides in from left */}
+              {/* Error */}
               <AnimatePresence>
                 {error && (
                   <motion.p
@@ -238,6 +243,20 @@ function Register() {
                     style={{ color: '#f87171', fontSize: '13px', margin: 0 }}
                   >
                     {error}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+
+              {/* Slow warning */}
+              <AnimatePresence>
+                {slowWarning && (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    style={{ color: 'var(--text2)', fontSize: '12px', textAlign: 'center', margin: 0 }}
+                  >
+                    ⏳ Server is waking up, please wait 20–30 seconds...
                   </motion.p>
                 )}
               </AnimatePresence>
@@ -277,7 +296,7 @@ function Register() {
               transition={{ duration: 0.3 }}
               style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
             >
-              {/* OTP input stagger */}
+              {/* OTP input */}
               <motion.div
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
