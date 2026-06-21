@@ -31,3 +31,30 @@ Database
 Deployment
 - Vercel
 - Render
+
+## 📸 Screenshots
+
+### 🏠 Home
+
+<p align="center">
+  <img src="images/HOME.JPG" width="95%">
+</p>
+
+### 📝 Login & Register
+
+<p align="center">
+  <img src="images/LOGIN.JPG" width="48%">
+  <img src="images/Register.JPG" width="48%">
+</p>
+
+### 📝 Dashboard
+
+<p align="center">
+  <img src="images/Dashboard.JPG" width="95%">
+</p>
+
+### 👤 Profile
+
+<p align="center">
+  <img src="images/Profile.JPG" width="95%">
+</p>
