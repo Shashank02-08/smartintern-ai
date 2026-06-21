@@ -58,3 +58,17 @@ Deployment
 <p align="center">
   <img src="images/Profile.JPG" width="95%">
 </p>
+
+### Installation
+
+git clone https://github.com/Shashank02-08/smartintern-ai.git
+
+cd smartintern-ai
+
+npm install
+
+npm run dev
+
+## Backend Repository
+
+👉 https://github.com/Shashank02-08/smartintern-backend
