@@ -4,20 +4,44 @@ import { motion } from 'framer-motion'
 import { AnimatedButton, FadeIn, StaggerContainer, StaggerItem, PageTransition } from '../components/AnimatedCard'
 
 const BACKEND = 'https://smartintern-backend-j6gf.onrender.com'
+const CROP_SIZE = 300
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max)
+}
 
 function Profile() {
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [message, setMessage] = useState('')
   const [profile, setProfile] = useState({
     name: '', email: '', phone: '', college: '', degree: '', year: '', skills: [], bio: '', photo: ''
   })
   const fileInputRef = useRef(null)
 
+  // ── Crop modal state ──
+  const [showCropModal, setShowCropModal] = useState(false)
+  const [cropImageSrc, setCropImageSrc] = useState(null)
+  const [imgNaturalSize, setImgNaturalSize] = useState({ width: 0, height: 0 })
+  const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 })
+  const [cropZoom, setCropZoom] = useState(1)
+  const [dragging, setDragging] = useState(false)
+  const dragStartRef = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 })
+
   useEffect(() => { fetchProfile() }, [])
+
+  // Reclamp pan offset whenever zoom changes, so the image never reveals empty space
+  useEffect(() => {
+    if (!imgNaturalSize.width || !imgNaturalSize.height) return
+    const { maxOffsetX, maxOffsetY } = getMaxOffsets(cropZoom)
+    setCropOffset(prev => ({
+      x: clamp(prev.x, -maxOffsetX, maxOffsetX),
+      y: clamp(prev.y, -maxOffsetY, maxOffsetY)
+    }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cropZoom, imgNaturalSize])
 
   async function fetchProfile() {
     const token = localStorage.getItem('token')
@@ -62,55 +86,117 @@ function Profile() {
     }
   }
 
-  async function handlePhotoChange(e) {
+  function handleChange(e) {
+    setProfile({ ...profile, [e.target.name]: e.target.value })
+  }
+
+  // ── Photo selection: opens the crop modal, does NOT save anything yet ──
+  function handlePhotoChange(e) {
     const file = e.target.files[0]
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
       setMessage('Please select an image file')
       setTimeout(() => setMessage(''), 2000)
-      return
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      setMessage('Image must be under 2MB')
-      setTimeout(() => setMessage(''), 2000)
-      return
-    }
-
-    const token = localStorage.getItem('token')
-    if (!token) { navigate('/login'); return }
-
-    const formData = new FormData()
-    formData.append('photo', file)
-
-    try {
-      setUploadingPhoto(true)
-      const res = await fetch(`${BACKEND}/api/profile/photo`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setProfile(prev => ({ ...prev, photo: data.photo }))
-        setMessage('Photo updated!')
-        setTimeout(() => setMessage(''), 2000)
-      } else {
-        setMessage(data.error || 'Upload failed')
-        setTimeout(() => setMessage(''), 2000)
-      }
-    } catch (err) {
-      console.error('Failed to upload photo:', err)
-      setMessage('Upload failed')
-      setTimeout(() => setMessage(''), 2000)
-    } finally {
-      setUploadingPhoto(false)
       e.target.value = ''
+      return
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setMessage('Image must be under 8MB')
+      setTimeout(() => setMessage(''), 2000)
+      e.target.value = ''
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result
+      const img = new Image()
+      img.onload = () => {
+        setImgNaturalSize({ width: img.naturalWidth, height: img.naturalHeight })
+        setCropImageSrc(dataUrl)
+        setCropOffset({ x: 0, y: 0 })
+        setCropZoom(1)
+        setShowCropModal(true)
+      }
+      img.src = dataUrl
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  // ── Crop math helpers (mirrors what's drawn on screen exactly) ──
+  function getScaledSize(zoom) {
+    if (!imgNaturalSize.width || !imgNaturalSize.height) return { displayWidth: 0, displayHeight: 0 }
+    const baseScale = Math.max(CROP_SIZE / imgNaturalSize.width, CROP_SIZE / imgNaturalSize.height)
+    const scale = baseScale * zoom
+    return { displayWidth: imgNaturalSize.width * scale, displayHeight: imgNaturalSize.height * scale }
+  }
+
+  function getMaxOffsets(zoom) {
+    const { displayWidth, displayHeight } = getScaledSize(zoom)
+    return {
+      maxOffsetX: Math.max(0, (displayWidth - CROP_SIZE) / 2),
+      maxOffsetY: Math.max(0, (displayHeight - CROP_SIZE) / 2)
     }
   }
 
-  function handleChange(e) {
-    setProfile({ ...profile, [e.target.name]: e.target.value })
+  function getEventPos(e) {
+    if (e.touches && e.touches.length) return { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    return { x: e.clientX, y: e.clientY }
+  }
+
+  function handleCropDragStart(e) {
+    setDragging(true)
+    const pos = getEventPos(e)
+    dragStartRef.current = { x: pos.x, y: pos.y, offsetX: cropOffset.x, offsetY: cropOffset.y }
+  }
+
+  function handleCropDragMove(e) {
+    if (!dragging) return
+    const pos = getEventPos(e)
+    const dx = pos.x - dragStartRef.current.x
+    const dy = pos.y - dragStartRef.current.y
+    const { maxOffsetX, maxOffsetY } = getMaxOffsets(cropZoom)
+    setCropOffset({
+      x: clamp(dragStartRef.current.offsetX + dx, -maxOffsetX, maxOffsetX),
+      y: clamp(dragStartRef.current.offsetY + dy, -maxOffsetY, maxOffsetY)
+    })
+  }
+
+  function handleCropDragEnd() {
+    setDragging(false)
+  }
+
+  function handleCropCancel() {
+    setShowCropModal(false)
+    setCropImageSrc(null)
+  }
+
+  function handleCropApply() {
+    const img = new Image()
+    img.onload = () => {
+      const baseScale = Math.max(CROP_SIZE / imgNaturalSize.width, CROP_SIZE / imgNaturalSize.height)
+      const scale = baseScale * cropZoom
+      const displayWidth = imgNaturalSize.width * scale
+      const displayHeight = imgNaturalSize.height * scale
+      const left = (CROP_SIZE - displayWidth) / 2 + cropOffset.x
+      const top = (CROP_SIZE - displayHeight) / 2 + cropOffset.y
+
+      const canvas = document.createElement('canvas')
+      canvas.width = CROP_SIZE
+      canvas.height = CROP_SIZE
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, left, top, displayWidth, displayHeight)
+
+      const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.85)
+      setProfile(prev => ({ ...prev, photo: croppedDataUrl }))
+      setShowCropModal(false)
+      setCropImageSrc(null)
+      setMessage('Photo ready — click Save Profile to apply')
+      setTimeout(() => setMessage(''), 2500)
+    }
+    img.src = cropImageSrc
   }
 
   const handleLogout = () => {
@@ -129,6 +215,10 @@ function Profile() {
     fontSize: '12px', color: 'var(--text2)', marginBottom: '6px',
     display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em'
   }
+
+  const cropDisplay = getScaledSize(cropZoom)
+  const cropLeft = (CROP_SIZE - cropDisplay.displayWidth) / 2 + cropOffset.x
+  const cropTop = (CROP_SIZE - cropDisplay.displayHeight) / 2 + cropOffset.y
 
   if (loading) return (
     <div style={{
@@ -273,7 +363,7 @@ function Profile() {
                         background: 'rgba(0,0,0,0.6)', color: '#fff',
                         fontSize: '10px', textAlign: 'center', padding: '2px 0'
                       }}>
-                        {uploadingPhoto ? '...' : 'Change'}
+                        Change
                       </div>
                     )}
                   </motion.div>
@@ -442,6 +532,86 @@ function Profile() {
             </div>
           </FadeIn>
         </div>
+
+        {/* Crop Modal */}
+        {showCropModal && (
+          <div style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px'
+          }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              style={{
+                background: 'var(--bg2)', border: '1px solid var(--border)',
+                borderRadius: '16px', padding: '24px', width: '340px', maxWidth: '100%'
+              }}
+            >
+              <h3 style={{ fontSize: '16px', marginBottom: '4px', fontFamily: 'Space Grotesk' }}>
+                Reposition Photo
+              </h3>
+              <p style={{ fontSize: '12px', color: 'var(--text2)', marginBottom: '16px' }}>
+                Drag to move, use the slider to zoom
+              </p>
+
+              <div
+                onMouseDown={handleCropDragStart}
+                onMouseMove={handleCropDragMove}
+                onMouseUp={handleCropDragEnd}
+                onMouseLeave={handleCropDragEnd}
+                onTouchStart={handleCropDragStart}
+                onTouchMove={handleCropDragMove}
+                onTouchEnd={handleCropDragEnd}
+                style={{
+                  width: `${CROP_SIZE}px`, height: `${CROP_SIZE}px`, maxWidth: '100%',
+                  borderRadius: '50%', overflow: 'hidden', position: 'relative',
+                  margin: '0 auto 20px', background: '#000',
+                  cursor: dragging ? 'grabbing' : 'grab',
+                  border: '2px solid var(--accent)', touchAction: 'none'
+                }}
+              >
+                {cropImageSrc && (
+                  <img
+                    src={cropImageSrc}
+                    alt="Crop preview"
+                    draggable={false}
+                    style={{
+                      position: 'absolute',
+                      left: `${cropLeft}px`,
+                      top: `${cropTop}px`,
+                      width: `${cropDisplay.displayWidth}px`,
+                      height: `${cropDisplay.displayHeight}px`,
+                      maxWidth: 'none',
+                      userSelect: 'none',
+                      pointerEvents: 'none'
+                    }}
+                  />
+                )}
+              </div>
+
+              <label style={{ ...labelStyle, textAlign: 'center', display: 'block' }}>Zoom</label>
+              <input
+                type="range" min="1" max="3" step="0.01"
+                value={cropZoom}
+                onChange={e => setCropZoom(parseFloat(e.target.value))}
+                style={{ width: '100%', marginBottom: '20px' }}
+              />
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button onClick={handleCropCancel} style={{
+                  flex: 1, padding: '10px', background: 'transparent',
+                  border: '1px solid var(--border)', borderRadius: '8px',
+                  color: 'var(--text)', fontSize: '14px', cursor: 'pointer'
+                }}>Cancel</button>
+                <button onClick={handleCropApply} style={{
+                  flex: 1, padding: '10px', background: 'var(--accent)',
+                  border: 'none', borderRadius: '8px',
+                  color: '#fff', fontSize: '14px', fontWeight: '600', cursor: 'pointer'
+                }}>Apply</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </PageTransition>
   )
