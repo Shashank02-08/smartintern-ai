@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { AnimatedButton, FadeIn, StaggerContainer, StaggerItem, PageTransition } from '../components/AnimatedCard'
@@ -10,10 +10,12 @@ function Profile() {
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [message, setMessage] = useState('')
   const [profile, setProfile] = useState({
-    name: '', email: '', phone: '', college: '', degree: '', year: '', skills: [], bio: ''
+    name: '', email: '', phone: '', college: '', degree: '', year: '', skills: [], bio: '', photo: ''
   })
+  const fileInputRef = useRef(null)
 
   useEffect(() => { fetchProfile() }, [])
 
@@ -29,7 +31,7 @@ function Profile() {
       setProfile({
         name: data.name || '', email: data.email || '', phone: data.phone || '',
         college: data.college || '', degree: data.degree || '', year: data.year || '',
-        skills: data.skills || [], bio: data.bio || ''
+        skills: data.skills || [], bio: data.bio || '', photo: data.photo || ''
       })
     } catch (err) {
       console.error('Failed to fetch profile:', err)
@@ -57,6 +59,53 @@ function Profile() {
       console.error('Failed to save profile:', err)
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handlePhotoChange(e) {
+    const file = e.target.files[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setMessage('Please select an image file')
+      setTimeout(() => setMessage(''), 2000)
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage('Image must be under 2MB')
+      setTimeout(() => setMessage(''), 2000)
+      return
+    }
+
+    const token = localStorage.getItem('token')
+    if (!token) { navigate('/login'); return }
+
+    const formData = new FormData()
+    formData.append('photo', file)
+
+    try {
+      setUploadingPhoto(true)
+      const res = await fetch(`${BACKEND}/api/profile/photo`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setProfile(prev => ({ ...prev, photo: data.photo }))
+        setMessage('Photo updated!')
+        setTimeout(() => setMessage(''), 2000)
+      } else {
+        setMessage(data.error || 'Upload failed')
+        setTimeout(() => setMessage(''), 2000)
+      }
+    } catch (err) {
+      console.error('Failed to upload photo:', err)
+      setMessage('Upload failed')
+      setTimeout(() => setMessage(''), 2000)
+    } finally {
+      setUploadingPhoto(false)
+      e.target.value = ''
     }
   }
 
@@ -191,16 +240,43 @@ function Profile() {
                   background: 'var(--bg2)', border: '1px solid var(--border)',
                   borderRadius: '12px', padding: '24px', textAlign: 'center'
                 }}>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handlePhotoChange}
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                  />
                   <motion.div
-                    whileHover={{ scale: 1.08 }}
+                    whileHover={{ scale: editing ? 1.08 : 1 }}
                     transition={{ duration: 0.2 }}
+                    onClick={() => editing && fileInputRef.current?.click()}
                     style={{
                       width: '80px', height: '80px', borderRadius: '50%',
                       background: 'var(--glow)', border: '2px solid var(--accent)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '28px', margin: '0 auto 16px'
+                      fontSize: '28px', margin: '0 auto 16px',
+                      cursor: editing ? 'pointer' : 'default',
+                      overflow: 'hidden', position: 'relative'
                     }}
-                  >👤</motion.div>
+                  >
+                    {profile.photo ? (
+                      <img
+                        src={profile.photo}
+                        alt="Profile"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : '👤'}
+                    {editing && (
+                      <div style={{
+                        position: 'absolute', bottom: 0, left: 0, right: 0,
+                        background: 'rgba(0,0,0,0.6)', color: '#fff',
+                        fontSize: '10px', textAlign: 'center', padding: '2px 0'
+                      }}>
+                        {uploadingPhoto ? '...' : 'Change'}
+                      </div>
+                    )}
+                  </motion.div>
                   {editing ? (
                     <input name="name" value={profile.name} onChange={handleChange}
                       style={{ ...inputStyle, textAlign: 'center', fontSize: '18px', fontWeight: '600' }} />
