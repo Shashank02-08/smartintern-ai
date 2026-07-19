@@ -10,7 +10,7 @@ https://smartintern-ai.vercel.app
 - 🔐 JWT Authentication
 - 📧 OTP Email Verification
 - 📄 Resume Upload
-- 🤖 AI Skill Matching
+- 🤖 AI/ML Skill Matching
 - 🎯 Personalized Internship Recommendations
 - 🗄 MongoDB Database
 
@@ -18,7 +18,6 @@ https://smartintern-ai.vercel.app
 
 Frontend
 - React
-- TypeScript
 - Vite
 
 Backend
